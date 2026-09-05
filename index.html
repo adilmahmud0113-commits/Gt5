@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Open World</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #87ceeb;
+    font-family: Arial, sans-serif;
+  }
+  canvas { display: block; }
+
+  #controls {
+    position: fixed;
+    bottom: 25px;
+    left: 20px;
+    display: grid;
+    grid-template-columns: 60px 60px 60px;
+    gap: 6px;
+  }
+  button {
+    width: 60px;
+    height: 60px;
+    border: 0;
+    border-radius: 15px;
+    background: rgba(0,0,0,.55);
+    color: white;
+    font-size: 24px;
+    touch-action: none;
+  }
+  #up { grid-column: 2; }
+  #left { grid-column: 1; grid-row: 2; }
+  #down { grid-column: 2; grid-row: 2; }
+  #right { grid-column: 3; grid-row: 2; }
+
+  #info {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    color: white;
+    background: rgba(0,0,0,.5);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<div id="info">🏙️ Mini Open World<br>🚶 হাঁটতে নিচের বোতাম ব্যবহার করো</div>
+
+<div id="controls">
+  <button id="up">▲</button>
+  <button id="left">◀</button>
+  <button id="down">▼</button>
+  <button id="right">▶</button>
+</div>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+}
+resize();
+addEventListener("resize", resize);
+
+const player = {
+  x: 0,
+  y: 0,
+  speed: 4
+};
+
+const keys = {};
+
+function holdButton(id, key) {
+  const btn = document.getElementById(id);
+
+  btn.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    keys[key] = true;
+  });
+
+  btn.addEventListener("pointerup", () => keys[key] = false);
+  btn.addEventListener("pointercancel", () => keys[key] = false);
+  btn.addEventListener("pointerleave", () => keys[key] = false);
+}
+
+holdButton("up", "up");
+holdButton("down", "down");
+holdButton("left", "left");
+holdButton("right", "right");
+
+addEventListener("keydown", e => {
+  if (e.key === "ArrowUp" || e.key === "w") keys.up = true;
+  if (e.key === "ArrowDown" || e.key === "s") keys.down = true;
+  if (e.key === "ArrowLeft" || e.key === "a") keys.left = true;
+  if (e.key === "ArrowRight" || e.key === "d") keys.right = true;
+});
+
+addEventListener("keyup", e => {
+  if (e.key === "ArrowUp" || e.key === "w") keys.up = false;
+  if (e.key === "ArrowDown" || e.key === "s") keys.down = false;
+  if (e.key === "ArrowLeft" || e.key === "a") keys.left = false;
+  if (e.key === "ArrowRight" || e.key === "d") keys.right = false;
+});
+
+function update() {
+  if (keys.up) player.y -= player.speed;
+  if (keys.down) player.y += player.speed;
+  if (keys.left) player.x -= player.speed;
+  if (keys.right) player.x += player.speed;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // আকাশ
+  ctx.fillStyle = "#87ceeb";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // রাস্তা
+  ctx.fillStyle = "#555";
+  ctx.fillRect(0, canvas.height / 2 - 80, canvas.width, 160);
+
+  // রাস্তার দাগ
+  ctx.strokeStyle = "#fff";
+  ctx.lineWidth = 5;
+  ctx.setLineDash([30, 25]);
+  ctx.beginPath();
+  ctx.moveTo(0, canvas.height / 2);
+  ctx.lineTo(canvas.width, canvas.height / 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // শহরের বাড়ি
+  for (let i = -3; i <= 3; i++) {
+    const bx = canvas.width / 2 + i * 180 - player.x * 0.5;
+    const by = canvas.height / 2 - 250 - player.y * 0.3;
+
+    ctx.fillStyle = "#d98b5f";
+    ctx.fillRect(bx, by, 120, 130);
+
+    ctx.fillStyle = "#8b4513";
+    ctx.beginPath();
+    ctx.moveTo(bx - 10, by);
+    ctx.lineTo(bx + 60, by - 60);
+    ctx.lineTo(bx + 130, by);
+    ctx.fill();
+
+    ctx.fillStyle = "#5b3a29";
+    ctx.fillRect(bx + 45, by + 70, 30, 60);
+
+    ctx.fillStyle = "#9de0ff";
+    ctx.fillRect(bx + 15, by + 25, 25, 25);
+    ctx.fillRect(bx + 80, by + 25, 25, 25);
+  }
+
+  // চরিত্র
+  const px = canvas.width / 2;
+  const py = canvas.height / 2 - 20;
+
+  ctx.fillStyle = "#222";
+  ctx.beginPath();
+  ctx.arc(px, py - 35, 15, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#2563eb";
+  ctx.fillRect(px - 18, py - 20, 36, 45);
+
+  ctx.fillStyle = "#222";
+  ctx.fillRect(px - 15, py + 25, 10, 25);
+  ctx.fillRect(px + 5, py + 25, 10, 25);
+
+  ctx.fillStyle = "#fff";
+  ctx.font = "14px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("PLAYER", px, py - 65);
+}
+
+function gameLoop() {
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>
+
