@@ -1,0 +1,89 @@
+// Steering + Camera
+let carAngle = 0;
+
+function update() {
+  const speed = driving ? 0.15 : 0.08;
+  const target = driving ? car : player;
+
+  if (driving) {
+    // গাড়ির স্টিয়ারিং
+    if (keys.left) carAngle += 0.04;
+    if (keys.right) carAngle -= 0.04;
+
+    car.rotation.y = carAngle;
+
+    // গাড়ি সামনে-পেছনে চলবে
+    if (keys.up) {
+      car.position.x -= Math.sin(carAngle) * speed;
+      car.position.z -= Math.cos(carAngle) * speed;
+    }
+
+    if (keys.down) {
+      car.position.x += Math.sin(carAngle) * speed;
+      car.position.z += Math.cos(carAngle) * speed;
+    }
+
+    // চাকা ঘুরবে
+    wheels.forEach(wheel => {
+      wheel.rotation.x += 0.15;
+    });
+  } else {
+    // চরিত্র হাঁটা
+    if (keys.up) player.position.z -= speed;
+    if (keys.down) player.position.z += speed;
+    if (keys.left) player.position.x -= speed;
+    if (keys.right) player.position.x += speed;
+  }
+
+  // Mission 1
+  if (mission === 0 && !missionComplete) {
+    const distance = player.position.distanceTo(car.position);
+
+    if (distance < 4) {
+      missionComplete = true;
+      document.getElementById("info").innerHTML =
+        "🏆 MISSION COMPLETE!<br>🎯 MISSION চাপো";
+    }
+  }
+
+  // Mission 2
+  if (mission === 2 && driving) {
+    const distance = car.position.distanceTo(
+      new THREE.Vector3(25, 0, 25)
+    );
+
+    if (distance < 5) {
+      mission = 3;
+      document.getElementById("info").innerHTML =
+        "🏆 MISSION COMPLETE!<br>🎉 দোকানে পৌঁছেছো!";
+    }
+  }
+
+  // Traffic movement
+  trafficCars.forEach((traffic, i) => {
+    traffic.position.x += 0.03 + i * 0.01;
+
+    if (traffic.position.x > 100) {
+      traffic.position.x = -100;
+    }
+  });
+
+  // Camera follow
+  const cameraDistance = driving ? 12 : 10;
+
+  camera.position.lerp(
+    new THREE.Vector3(
+      target.position.x - Math.sin(carAngle) * cameraDistance,
+      target.position.y + 6,
+      target.position.z - Math.cos(carAngle) * cameraDistance
+    ),
+    0.06
+  );
+
+  camera.lookAt(
+    target.position.x,
+    target.position.y + 1,
+    target.position.z
+  );
+}
+
